@@ -141,6 +141,15 @@ export function extractPlaylists(data: Json): LibraryItem[] {
   return [...out.values()];
 }
 
+/** Video ids on a playlist page (`VL…` browse), in order. */
+export function extractPlaylistVideoIds(data: Json): string[] {
+  const ids: string[] = [];
+  walk(data, (key, o) => {
+    if ((key === 'playlistVideoRenderer' || key === 'playlistPanelVideoRenderer') && typeof o.videoId === 'string') ids.push(o.videoId);
+  });
+  return ids;
+}
+
 /** Continuation tokens for the next page of results. */
 export function extractContinuations(data: Json): string[] {
   const tokens = new Set<string>();

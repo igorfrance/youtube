@@ -20,8 +20,18 @@ project's design doc; this is how the code is laid out.
 - **Quick switcher**: `Alt+Shift+F` on YouTube (change it at
   `chrome://extensions/shortcuts`).
 
-Nothing is ever changed on YouTube's side: the extension never subscribes,
-unsubscribes or edits playlists.
+- **Unsubscribe and delete.** Select channels or playlists in the organizer and
+  unsubscribe from them, or delete them (playlists saved from other people are
+  removed from your library instead). Watch later and Liked videos are never
+  deleted.
+- **Merge playlists.** Select playlists and merge them into a new playlist or an
+  existing one (which may be one of the selected). Videos are copied in order
+  with duplicates skipped; the merged playlist is re-read and checked, and only
+  then are the other selected playlists deleted. If the check fails, nothing is
+  deleted. The target keeps its folders and gains those of the merged playlists.
+
+These are the only actions that change your YouTube account, and each asks for
+confirmation first. Everything else is local organization.
 
 ## How it works
 
