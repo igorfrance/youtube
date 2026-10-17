@@ -22,6 +22,7 @@ separate build step for them.
 bun install
 bun run dev        # folders extension with hot reload (opens Chrome)
 bun run build      # production build in apps/folders-extension/.output/chrome-mv3
+bun run zip:all    # store packages for Chrome, Edge and Firefox (+ Firefox sources zip)
 bun test           # unit tests across the repo
 bun run typecheck  # vue-tsc / tsc in every workspace
 ```
@@ -34,4 +35,17 @@ bun run typecheck  # vue-tsc / tsc in every workspace
 4. Open YouTube while signed in. Your subscriptions and playlists are read a
    couple of seconds after the page loads.
 
-CI also attaches a zipped build to every run.
+CI also attaches the zipped builds to every run.
+
+### Edge and Firefox
+
+- **Edge** runs the Chrome build as is: open `edge://extensions`, turn on
+  **Developer mode**, and load `.output/chrome-mv3` (or `.output/edge-mv3`).
+- **Firefox** (128 or later): run `bun --filter folders-extension build:firefox`,
+  open `about:debugging#/runtime/this-firefox`, click **Load Temporary Add-on**
+  and pick `apps/folders-extension/.output/firefox-mv3/manifest.json`. In
+  Firefox the organizer opens in the sidebar (toolbar button), or in a tab from
+  the pencil in YouTube's sidebar.
+
+Store listings, screenshots and the privacy policy are in
+[`apps/folders-extension/store/`](apps/folders-extension/store/README.md).

@@ -17,6 +17,7 @@
   --ytf-accent: var(--yt-spec-call-to-action, #065fd4);
   --ytf-accent-bg: rgba(6, 95, 212, 0.1);
   --ytf-danger: #c5221f;
+  --ytf-on-danger: #ffffff;
   --ytf-shadow: 0 4px 32px rgba(0, 0, 0, 0.18);
   --ytf-radius: 10px;
 }
@@ -35,6 +36,7 @@
     --ytf-accent: var(--yt-spec-call-to-action, #3ea6ff);
     --ytf-accent-bg: rgba(62, 166, 255, 0.15);
     --ytf-danger: #f28b82;
+    --ytf-on-danger: #202124;
   }
 }
 

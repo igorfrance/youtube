@@ -11,6 +11,7 @@
     "dev": "bun --filter folders-extension dev",
     "build": "bun --filter folders-extension build",
     "zip": "bun --filter folders-extension zip",
+    "zip:all": "bun --filter folders-extension zip:all",
     "test": "bun test",
     "typecheck": "bun --filter '*' typecheck"
   },

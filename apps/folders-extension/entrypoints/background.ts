@@ -38,6 +38,9 @@ async function getFeed(channelIds: ChannelId[], force = false): Promise<FeedResu
   return { videos, failed };
 }
 
+/** Firefox's sidebar API, which Chrome's typings don't describe. */
+const sidebar = () => (browser as unknown as { sidebarAction: { toggle(): Promise<void> } }).sidebarAction;
+
 /**
  * The library can only be read, and the account changed, from inside a
  * YouTube tab (it needs the user's session); relay to one.
@@ -54,7 +57,12 @@ async function toYouTubeTab<R>(msg: TabMessage, fallback: (error: string) => R):
 }
 
 export default defineBackground(() => {
-  void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  if (import.meta.env.FIREFOX) {
+    // Firefox has a sidebar instead of a side panel; the toolbar button toggles it.
+    browser.action.onClicked.addListener(() => void sidebar().toggle());
+  } else {
+    void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  }
 
   browser.commands.onCommand.addListener(async (command, tab) => {
     if (command !== 'open-switcher' || !tab?.id || !tab.url?.startsWith('https://www.youtube.com/')) return;
@@ -73,6 +81,11 @@ export default defineBackground(() => {
         void toYouTubeTab<ActionResult>(msg, (error) => ({ ok: false, error })).then(sendResponse);
         return true;
       case 'sidepanel:open': {
+        if (import.meta.env.FIREFOX) {
+          // Firefox only opens the sidebar from its own UI, not from a page click; use a tab.
+          void browser.tabs.create({ url: browser.runtime.getURL('/sidepanel.html') }).then(() => sendResponse(true));
+          return true;
+        }
         const windowId = sender.tab?.windowId;
         if (windowId === undefined) return false;
         // Must be called synchronously within the user's click to count as a user gesture.

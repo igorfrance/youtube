@@ -1,4 +1,4 @@
-# YouTube Folders
+# Folders for YouTube
 
 Folders for YouTube subscriptions and playlists. Design notes live in the
 project's design doc; this is how the code is laid out.
@@ -50,4 +50,9 @@ re-read from YouTube at most hourly. Channels that disappear from your library
 but are still in a folder are kept and shown struck through rather than
 silently dropped.
 
-**Permissions.** `storage`, `sidePanel`, and access to `www.youtube.com` only.
+**Permissions.** `storage`, `sidePanel` (Chrome and Edge), and access to
+`www.youtube.com` only. See [PRIVACY.md](PRIVACY.md).
+
+**Browsers.** One codebase builds for Chrome, Edge and Firefox (MV3, 128+).
+Firefox has no side panel, so the organizer is a sidebar there (WXT maps the
+`sidepanel` entrypoint to `sidebar_action`).
