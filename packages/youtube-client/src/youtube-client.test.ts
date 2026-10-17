@@ -125,3 +125,27 @@ test('parseChannelFeed reads entries', () => {
     published: Date.parse('2026-10-01T10:00:00Z'), thumbnail: 'https://i.ytimg.com/vi/abc/hq.jpg', views: 1234, isShort: true,
   }]);
 });
+
+test('playlistVideoIds pages through VL browse results', async () => {
+  const pages: Record<string, unknown> = {
+    VLPL1: { contents: [{ playlistVideoRenderer: { videoId: 'a' } }, { playlistVideoRenderer: { videoId: 'b' } }, { continuationItemRenderer: { continuationEndpoint: { continuationCommand: { token: 't2' } } } }] },
+    t2: { items: [{ playlistVideoRenderer: { videoId: 'c' } }, { playlistVideoRenderer: { videoId: 'a' } }] },
+  };
+  const client = new InnertubeClient({ context: {}, origin: 'https://www.youtube.com' }, async (_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    return new Response(JSON.stringify(pages[body.browseId ?? body.continuation]));
+  });
+  expect(await client.playlistVideoIds('PL1')).toEqual(['a', 'b', 'c']);
+});
+
+test('removePlaylist falls back to un-saving playlists the user does not own', async () => {
+  const calls: string[] = [];
+  const client = new InnertubeClient({ context: {}, origin: 'https://www.youtube.com' }, async (url) => {
+    const endpoint = new URL(url).pathname.replace('/youtubei/v1/', '');
+    calls.push(endpoint);
+    return new Response('{}', { status: endpoint === 'playlist/delete' ? 403 : 200 });
+  });
+  expect(await client.removePlaylist('PLother')).toBe('unsaved');
+  expect(calls).toEqual(['playlist/delete', 'like/removelike']);
+  await expect(client.removePlaylist('WL')).rejects.toThrow('built-in');
+});

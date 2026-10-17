@@ -20,6 +20,7 @@ import {
   type TreeKind,
   type TreeNode,
 } from '../model/org';
+import AccountDialog from './AccountDialog.vue';
 import FolderBar from './FolderBar.vue';
 import ItemList from './ItemList.vue';
 
@@ -158,6 +159,15 @@ async function importFile(e: Event) {
   }
 }
 
+// --- Changes on YouTube (unsubscribe, delete, merge) -------------------------
+const dialog = ref<'delete' | 'merge' | null>(null);
+/** Selected items in the order they were selected. */
+const selectedItems = computed(() => {
+  const all = itemsOf(lib.value, kindOfTree(tree.value));
+  return [...selected.value].map((id) => all.find((i) => i.id === id)).filter((i): i is NonNullable<typeof i> => !!i);
+});
+watch(tree, () => (dialog.value = null));
+
 const showSettings = ref(false);
 const counts = computed(() => `${lib.value.channels.length} channels · ${lib.value.playlists.length} playlists`);
 </script>
@@ -253,6 +263,12 @@ const counts = computed(() => `${lib.value.channels.length} channels · ${lib.va
         <button v-if="inRealFolder" class="link" @click="removeHere">Remove from this folder</button>
         <button class="link" @click="selected = new Set()">Clear</button>
       </div>
+      <div class="account">
+        <button v-if="tree === 'playlists'" class="ytf-btn" @click="dialog = 'merge'"><Icon name="playlist" :size="16" /> Merge…</button>
+        <button class="ytf-btn danger" @click="dialog = 'delete'">
+          <Icon name="trash" :size="16" /> {{ tree === 'subscriptions' ? 'Unsubscribe…' : 'Delete…' }}
+        </button>
+      </div>
       <div class="chips">
         <button v-for="t in targets" :key="t.id" class="chip" @click="addTo(t.id)">
           <FolderGlyph :color="t.color" :icon="t.icon" :size="16" /> {{ t.name }}
@@ -261,6 +277,15 @@ const counts = computed(() => `${lib.value.channels.length} channels · ${lib.va
       </div>
       <span class="small">Adding keeps items in their other folders too.</span>
     </div>
+
+    <AccountDialog
+      v-if="dialog"
+      :mode="dialog"
+      :items="selectedItems"
+      :all-playlists="lib.playlists"
+      @close="dialog = null"
+      @done="selected = new Set()"
+    />
 
     <footer>
       <span v-if="message" class="msg">{{ message }}</span>
@@ -464,6 +489,13 @@ h1 {
 }
 .bulk-head strong {
   flex: 1;
+}
+.account {
+  display: flex;
+  gap: 6px;
+}
+.account .danger {
+  color: var(--ytf-danger);
 }
 .chips {
   display: flex;

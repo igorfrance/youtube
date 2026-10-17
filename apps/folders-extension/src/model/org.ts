@@ -223,3 +223,17 @@ export function parseExport(json: string): OrgState {
 }
 
 export const toExport = (s: OrgState) => JSON.stringify({ app: 'youtube-folders', version: ORG_VERSION, exportedAt: new Date().toISOString(), org: s }, null, 2);
+
+/** Drops items from every folder (they were removed from YouTube on purpose). */
+export function forgetItems(s: OrgState, itemIds: string[]): OrgState {
+  const placements = { ...s.placements };
+  for (const id of itemIds) delete placements[id];
+  return { ...s, placements };
+}
+
+/** Puts `toId` into every folder any of `fromIds` is in (keeping its own folders). */
+export function inheritFolders(s: OrgState, fromIds: string[], toId: string): OrgState {
+  const folders = new Set(s.placements[toId] ?? []);
+  for (const id of fromIds) for (const f of s.placements[id] ?? []) folders.add(f);
+  return folders.size ? { ...s, placements: { ...s.placements, [toId]: [...folders] } } : s;
+}

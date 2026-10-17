@@ -1,5 +1,5 @@
 import type { LibraryItem } from '@yt/shared';
-import { extractChannels, extractContinuations, extractInitialData, extractPlaylists } from './extract';
+import { extractChannels, extractContinuations, extractInitialData, extractPlaylists, extractPlaylistVideoIds } from './extract';
 
 /**
  * What the client needs from the page's `ytcfg`. Only readable from the
@@ -20,6 +20,14 @@ export interface InnertubeConfig {
 
 export const BROWSE_SUBSCRIPTIONS = 'FEchannels';
 export const BROWSE_PLAYLISTS = 'FEplaylist_aggregation';
+
+/** Watch later and Liked videos: listed with playlists but can't be deleted. */
+export const SYSTEM_PLAYLISTS = new Set(['WL', 'LL']);
+/** YouTube's cap on videos in one playlist. */
+export const PLAYLIST_MAX_VIDEOS = 5000;
+const ADD_BATCH = 50;
+
+export type PlaylistPrivacy = 'PRIVATE' | 'UNLISTED' | 'PUBLIC';
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -55,16 +63,21 @@ export class InnertubeClient {
     return h;
   }
 
-  async browse(params: { browseId: string } | { continuation: string }): Promise<unknown> {
+  /** POSTs to an InnerTube endpoint (e.g. `browse`, `playlist/create`) as the signed-in user. */
+  async post(endpoint: string, body: Record<string, unknown>): Promise<Record<string, unknown>> {
     const key = this.cfg.apiKey ? `&key=${encodeURIComponent(this.cfg.apiKey)}` : '';
-    const res = await this.fetchFn(`${this.cfg.origin}/youtubei/v1/browse?prettyPrint=false${key}`, {
+    const res = await this.fetchFn(`${this.cfg.origin}/youtubei/v1/${endpoint}?prettyPrint=false${key}`, {
       method: 'POST',
       credentials: 'include',
       headers: await this.headers(),
-      body: JSON.stringify({ context: this.cfg.context, ...params }),
+      body: JSON.stringify({ context: this.cfg.context, ...body }),
     });
-    if (!res.ok) throw new Error(`YouTube browse failed: HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`YouTube ${endpoint} failed: HTTP ${res.status}`);
     return res.json();
+  }
+
+  browse(params: { browseId: string } | { continuation: string }): Promise<unknown> {
+    return this.post('browse', params);
   }
 
   /** Fetches a browse page and follows every continuation. */
@@ -92,6 +105,72 @@ export class InnertubeClient {
 
   fetchPlaylists(): Promise<LibraryItem[]> {
     return this.collect(BROWSE_PLAYLISTS, extractPlaylists);
+  }
+
+  // --- Changes to the user's account --------------------------------------
+
+  async unsubscribe(channelId: string): Promise<void> {
+    await this.post('subscription/unsubscribe', { channelIds: [channelId] });
+  }
+
+  /**
+   * Removes a playlist from the user's library: deletes it if the user owns
+   * it, otherwise un-saves it (someone else's playlist can't be deleted).
+   */
+  async removePlaylist(playlistId: string): Promise<'deleted' | 'unsaved'> {
+    if (SYSTEM_PLAYLISTS.has(playlistId)) throw new Error(`${playlistId} is a built-in playlist and can't be removed`);
+    try {
+      await this.post('playlist/delete', { playlistId });
+      return 'deleted';
+    } catch (e) {
+      try {
+        await this.post('like/removelike', { target: { playlistId } });
+        return 'unsaved';
+      } catch {
+        throw e;
+      }
+    }
+  }
+
+  /** Video ids in a playlist, in playlist order, following every continuation. */
+  async playlistVideoIds(playlistId: string): Promise<string[]> {
+    const ids: string[] = [];
+    const seen = new Set<string>();
+    const take = (data: unknown) => {
+      for (const id of extractPlaylistVideoIds(data)) {
+        if (seen.has(id)) continue;
+        seen.add(id);
+        ids.push(id);
+      }
+      return extractContinuations(data);
+    };
+    let queue = take(await this.browse({ browseId: `VL${playlistId}` }));
+    const done = new Set<string>();
+    for (let page = 0; queue.length && page < this.maxPages * 4; page++) {
+      const token = queue.shift()!;
+      done.add(token);
+      queue.push(...take(await this.browse({ continuation: token })));
+      queue = queue.filter((t) => !done.has(t));
+    }
+    return ids;
+  }
+
+  /** Creates a playlist and returns its id. */
+  async createPlaylist(title: string, privacy: PlaylistPrivacy = 'PRIVATE'): Promise<string> {
+    const res = await this.post('playlist/create', { title, privacyStatus: privacy });
+    const id = res.playlistId;
+    if (typeof id !== 'string') throw new Error('YouTube did not return the new playlist');
+    return id;
+  }
+
+  /** Appends videos to a playlist, in batches. */
+  async addVideos(playlistId: string, videoIds: string[], onProgress?: (added: number) => void): Promise<void> {
+    for (let i = 0; i < videoIds.length; i += ADD_BATCH) {
+      const actions = videoIds.slice(i, i + ADD_BATCH).map((addedVideoId) => ({ action: 'ACTION_ADD_VIDEO', addedVideoId }));
+      const res = await this.post('browse/edit_playlist', { playlistId, actions });
+      if (typeof res.status === 'string' && res.status !== 'STATUS_SUCCEEDED') throw new Error(`Adding videos failed: ${res.status}`);
+      onProgress?.(Math.min(i + ADD_BATCH, videoIds.length));
+    }
   }
 }
 

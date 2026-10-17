@@ -1,7 +1,18 @@
 import { isChannelId, type LibraryItem } from '@yt/shared';
-import { fetchFromPageHtml, InnertubeClient, text, type InnertubeConfig } from '@yt/youtube-client';
+import { fetchFromPageHtml, InnertubeClient, mergePlaylists, text, type InnertubeConfig, type MergeProgress } from '@yt/youtube-client';
 import { defineContentScript } from 'wxt/utils/define-content-script';
-import { REQ, RES, type BridgeMethods, type BridgeRequest, type BridgeResponse } from '../src/lib/bridge';
+import {
+  PROGRESS,
+  REQ,
+  RES,
+  type BatchResult,
+  type BridgeArgs,
+  type BridgeMethod,
+  type BridgeMethods,
+  type BridgeProgress,
+  type BridgeRequest,
+  type BridgeResponse,
+} from '../src/lib/bridge';
 
 /**
  * Runs in YouTube's own JavaScript world so it can read `ytcfg` and the data
@@ -41,7 +52,23 @@ export default defineContentScript({
       return new InnertubeClient(config);
     };
 
-    const methods: { [K in keyof BridgeMethods]: () => Promise<ReturnType<BridgeMethods[K]>> } = {
+    type Impl = { [K in BridgeMethod]: (args: BridgeArgs<K>, progress: (p: MergeProgress) => void) => Promise<ReturnType<BridgeMethods[K]>> };
+
+    /** Runs `fn` for each id one at a time (YouTube rate-limits bursts), collecting failures. */
+    const batch = async (ids: string[], fn: (id: string) => Promise<unknown>): Promise<BatchResult> => {
+      const out: BatchResult = { done: [], failed: [] };
+      for (const id of ids) {
+        try {
+          await fn(id);
+          out.done.push(id);
+        } catch (err) {
+          out.failed.push({ id, error: err instanceof Error ? err.message : String(err) });
+        }
+      }
+      return out;
+    };
+
+    const methods: Impl = {
       async fetchLibrary() {
         if (!cfg('LOGGED_IN')) throw new Error('Sign in to YouTube to import your subscriptions.');
         let partial = false;
@@ -87,6 +114,20 @@ export default defineContentScript({
           handle,
         } satisfies LibraryItem;
       },
+
+      async unsubscribe([channelIds]) {
+        const c = client();
+        return batch(channelIds, (id) => c.unsubscribe(id));
+      },
+
+      async removePlaylists([playlistIds]) {
+        const c = client();
+        return batch(playlistIds, (id) => c.removePlaylist(id));
+      },
+
+      async mergePlaylists([{ sources, target }], progress) {
+        return mergePlaylists(client(), sources, target, progress);
+      },
     };
 
     window.addEventListener('message', async (e) => {
@@ -95,7 +136,10 @@ export default defineContentScript({
       const reply = (r: Omit<BridgeResponse, 'source' | 'id'>) =>
         window.postMessage({ source: RES, id: req.id, ...r } satisfies BridgeResponse, location.origin);
       try {
-        reply({ result: await methods[req.method]() });
+        const progress = (p: MergeProgress) =>
+          window.postMessage({ source: PROGRESS, id: req.id, progress: p } satisfies BridgeProgress, location.origin);
+        const impl = methods[req.method] as (args: unknown[], progress: (p: MergeProgress) => void) => Promise<unknown>;
+        reply({ result: await impl(Array.isArray(req.args) ? req.args : [], progress) });
       } catch (err) {
         reply({ error: err instanceof Error ? err.message : String(err) });
       }

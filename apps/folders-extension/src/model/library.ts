@@ -34,3 +34,8 @@ export function upsertItem(lib: Library, item: LibraryItem): Library {
   const list = lib[key].filter((i) => i.id !== item.id);
   return { ...lib, [key]: [...list, item].sort((a, b) => a.title.localeCompare(b.title)) };
 }
+
+export function removeItems(lib: Library, ids: string[]): Library {
+  const gone = new Set(ids);
+  return { ...lib, channels: lib.channels.filter((c) => !gone.has(c.id)), playlists: lib.playlists.filter((p) => !gone.has(p.id)) };
+}

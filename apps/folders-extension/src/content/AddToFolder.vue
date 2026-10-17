@@ -35,7 +35,7 @@ watch(
     fromPage.value = null;
     // The page's data arrives with the navigation; give it a moment.
     await new Promise((r) => setTimeout(r, 300));
-    if (!item.value && ref_.value) fromPage.value = await callBridge('pageItem', 5000).catch(() => null);
+    if (!item.value && ref_.value) fromPage.value = await callBridge('pageItem', [], { timeoutMs: 5000 }).catch(() => null);
   },
   { immediate: true },
 );

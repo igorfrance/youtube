@@ -12,7 +12,7 @@ let inFlight: Promise<RefreshResult> | undefined;
 export function refreshLibrary(): Promise<RefreshResult> {
   inFlight ??= (async () => {
     try {
-      const fresh = await callBridge('fetchLibrary');
+      const fresh = await callBridge('fetchLibrary', []);
       const [prev, org] = await Promise.all([libraryValue.get(), orgStore.load()]);
       // An empty answer while we know of many items is far more likely a broken
       // fetch than a user who unsubscribed from everything; keep what we have.

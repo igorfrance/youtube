@@ -10,7 +10,8 @@ import Overlays from '../../src/content/Overlays.vue';
 import Sidebar from '../../src/content/Sidebar.vue';
 import { currentUrl, paletteOpen } from '../../src/content/ui-state';
 import { refreshLibrary, refreshLibraryIfStale } from '../../src/lib/library-sync';
-import type { TabMessage } from '../../src/lib/messages';
+import { runAccountAction } from '../../src/lib/account-actions';
+import type { ActionResult, TabMessage } from '../../src/lib/messages';
 import { useOrg } from '../../src/lib/store';
 
 export default defineContentScript({
@@ -22,6 +23,13 @@ export default defineContentScript({
     browser.runtime.onMessage.addListener((msg: TabMessage, _sender, sendResponse) => {
       if (msg.type === 'library:refresh') {
         void refreshLibrary().then(sendResponse);
+        return true;
+      }
+      if (msg.type === 'account:action') {
+        runAccountAction(msg.action).then(
+          (result) => sendResponse({ ok: true, result } satisfies ActionResult),
+          (e: unknown) => sendResponse({ ok: false, error: e instanceof Error ? e.message : String(e) } satisfies ActionResult),
+        );
         return true;
       }
       if (msg.type === 'switcher:open') paletteOpen.value = !paletteOpen.value;

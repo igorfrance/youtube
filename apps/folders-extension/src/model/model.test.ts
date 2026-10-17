@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { LibraryItem } from '@yt/shared';
 import { fuzzyScore } from '@yt/shared';
-import { mergeItems } from './library';
+import { mergeItems, removeItems } from './library';
 import {
   addToFolder,
   buildTree,
@@ -9,6 +9,8 @@ import {
   deleteFolder,
   emptyOrg,
   foldersOf,
+  forgetItems,
+  inheritFolders,
   itemIdsIn,
   moveFolder,
   moveItems,
@@ -108,4 +110,29 @@ test('fuzzyScore ranks prefixes, then word starts, then scattered matches', () =
   expect(ranked).toEqual(['Cooking', 'Retro Computing Bay']);
   expect(fuzzyScore('rcb', 'Retro Computing Bay')).toBeGreaterThan(0);
   expect(fuzzyScore('xyz', 'Retro Computing Bay')).toBe(0);
+});
+
+describe('account changes', () => {
+  test('forgetItems drops removed items from every folder', () => {
+    let { s, cooking, tech } = setup();
+    s = addToFolder(addToFolder(s, ['a', 'b'], cooking), ['a'], tech);
+    s = forgetItems(s, ['a']);
+    expect(s.placements.a).toBeUndefined();
+    expect(s.placements.b).toEqual([cooking]);
+  });
+
+  test('inheritFolders gives a merge target the folders of its sources', () => {
+    let { s, cooking, tech, code } = setup();
+    s = addToFolder(addToFolder(addToFolder(s, ['a'], cooking), ['b'], tech), ['t'], code);
+    s = inheritFolders(s, ['a', 'b', 'none'], 't');
+    expect(new Set(s.placements.t)).toEqual(new Set([code, cooking, tech]));
+    expect(inheritFolders(s, ['none'], 'x')).toBe(s);
+  });
+
+  test('removeItems drops items from the library', () => {
+    const lib = { channels: [ch('a'), ch('b')], playlists: [{ id: 'p', kind: 'playlist' as const, title: 'p', url: '/playlist?list=p' }], fetchedAt: 1 };
+    const out = removeItems(lib, ['a', 'p']);
+    expect(out.channels.map((c) => c.id)).toEqual(['b']);
+    expect(out.playlists).toEqual([]);
+  });
 });

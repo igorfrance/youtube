@@ -3,7 +3,7 @@ import type { ChannelId, FeedVideo } from '@yt/shared';
 import { channelFeedUrl, parseChannelFeed } from '@yt/youtube-client';
 import { browser } from 'wxt/browser';
 import { defineBackground } from 'wxt/utils/define-background';
-import type { BackgroundMessage, FeedResult, RefreshResult, TabMessage } from '../src/lib/messages';
+import type { ActionResult, BackgroundMessage, FeedResult, RefreshResult, TabMessage } from '../src/lib/messages';
 
 const FEED_TTL_MS = 30 * 60 * 1000;
 const FEED_CONCURRENCY = 6;
@@ -38,15 +38,18 @@ async function getFeed(channelIds: ChannelId[], force = false): Promise<FeedResu
   return { videos, failed };
 }
 
-/** The library can only be read from inside a YouTube tab (it needs the user's session). */
-async function refreshViaTab(): Promise<RefreshResult> {
+/**
+ * The library can only be read, and the account changed, from inside a
+ * YouTube tab (it needs the user's session); relay to one.
+ */
+async function toYouTubeTab<R>(msg: TabMessage, fallback: (error: string) => R): Promise<R> {
   const tabs = await browser.tabs.query({ url: 'https://www.youtube.com/*' });
   const tab = tabs.find((t) => t.active) ?? tabs[0];
-  if (!tab?.id) return { ok: false, error: 'Open YouTube in a tab, then refresh again.' };
+  if (!tab?.id) return fallback('Open YouTube in a tab, then try again.');
   try {
-    return (await browser.tabs.sendMessage(tab.id, { type: 'library:refresh' } satisfies TabMessage)) as RefreshResult;
+    return (await browser.tabs.sendMessage(tab.id, msg)) as R;
   } catch {
-    return { ok: false, error: 'Reload your YouTube tab, then refresh again.' };
+    return fallback('Reload your YouTube tab, then try again.');
   }
 }
 
@@ -64,7 +67,10 @@ export default defineBackground(() => {
         void getFeed(msg.channelIds, msg.force).then(sendResponse);
         return true;
       case 'library:refresh':
-        void refreshViaTab().then(sendResponse);
+        void toYouTubeTab<RefreshResult>(msg, (error) => ({ ok: false, error })).then(sendResponse);
+        return true;
+      case 'account:action':
+        void toYouTubeTab<ActionResult>(msg, (error) => ({ ok: false, error })).then(sendResponse);
         return true;
       case 'sidepanel:open': {
         const windowId = sender.tab?.windowId;
