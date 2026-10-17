@@ -302,7 +302,7 @@ select.ytf-input {
 }
 .danger {
   background: var(--ytf-danger);
-  color: #fff;
+  color: var(--ytf-on-danger);
 }
 .danger:hover {
   background: var(--ytf-danger);

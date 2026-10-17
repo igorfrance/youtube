@@ -94,7 +94,7 @@ describe('folders', () => {
     const back = parseExport(JSON.stringify(tampered));
     expect(back.folders).toEqual(s.folders);
     expect(back.placements).toEqual({ a: [cooking] });
-    expect(() => parseExport('{"x":1}')).toThrow('not a YouTube Folders export');
+    expect(() => parseExport('{"x":1}')).toThrow('not a Folders for YouTube export');
   });
 });
 

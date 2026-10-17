@@ -205,7 +205,7 @@ export function parseExport(json: string): OrgState {
   }
   const r = raw as { app?: string; version?: number; org?: OrgState };
   if (r?.app !== 'youtube-folders' || !r.org || !Array.isArray(r.org.folders) || typeof r.org.placements !== 'object') {
-    throw new Error('That file is not a YouTube Folders export.');
+    throw new Error('That file is not a Folders for YouTube export.');
   }
   if (r.version !== ORG_VERSION) throw new Error(`Unsupported export version ${r.version}.`);
   const folders = r.org.folders.filter((f) => typeof f?.id === 'string' && typeof f.name === 'string' && (f.tree === 'subscriptions' || f.tree === 'playlists'));

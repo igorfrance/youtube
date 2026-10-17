@@ -175,7 +175,7 @@ const counts = computed(() => `${lib.value.channels.length} channels · ${lib.va
 <template>
   <div class="app" @dragover="trackModifier">
     <header>
-      <h1>YouTube Folders</h1>
+      <h1>Folders for YouTube</h1>
       <button class="ytf-icon-btn" aria-label="Refresh from YouTube" title="Refresh from YouTube" :disabled="refreshing" @click="refresh">
         <Icon name="refresh" :class="{ spin: refreshing }" />
       </button>
