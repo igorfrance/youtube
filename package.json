@@ -1,0 +1,21 @@
+{
+  "name": "youtube-utilities",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tooling/*"
+  ],
+  "scripts": {
+    "dev": "bun --filter folders-extension dev",
+    "build": "bun --filter folders-extension build",
+    "zip": "bun --filter folders-extension zip",
+    "test": "bun test",
+    "typecheck": "bun --filter '*' typecheck"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "typescript": "^5.9.3"
+  }
+}

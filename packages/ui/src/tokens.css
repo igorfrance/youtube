@@ -1,0 +1,98 @@
+/*
+ * Design tokens. Inside YouTube the --yt-spec-* variables (which pierce the
+ * shadow DOM) make our UI follow YouTube's light/dark theme exactly; outside
+ * YouTube (the side panel) the fallbacks apply.
+ */
+:host,
+:root {
+  --ytf-font: 'Roboto', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --ytf-bg: var(--yt-spec-base-background, #ffffff);
+  --ytf-raised: var(--yt-spec-raised-background, #ffffff);
+  --ytf-menu: var(--yt-spec-menu-background, #ffffff);
+  --ytf-text: var(--yt-spec-text-primary, #0f0f0f);
+  --ytf-text-2: var(--yt-spec-text-secondary, #606060);
+  --ytf-hover: var(--yt-spec-badge-chip-background, rgba(0, 0, 0, 0.05));
+  --ytf-active: var(--yt-spec-10-percent-layer, rgba(0, 0, 0, 0.1));
+  --ytf-border: var(--yt-spec-10-percent-layer, rgba(0, 0, 0, 0.1));
+  --ytf-accent: var(--yt-spec-call-to-action, #065fd4);
+  --ytf-accent-bg: rgba(6, 95, 212, 0.1);
+  --ytf-danger: #c5221f;
+  --ytf-shadow: 0 4px 32px rgba(0, 0, 0, 0.18);
+  --ytf-radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host,
+  :root {
+    --ytf-bg: var(--yt-spec-base-background, #0f0f0f);
+    --ytf-raised: var(--yt-spec-raised-background, #212121);
+    --ytf-menu: var(--yt-spec-menu-background, #282828);
+    --ytf-text: var(--yt-spec-text-primary, #f1f1f1);
+    --ytf-text-2: var(--yt-spec-text-secondary, #aaaaaa);
+    --ytf-hover: var(--yt-spec-badge-chip-background, rgba(255, 255, 255, 0.1));
+    --ytf-active: var(--yt-spec-10-percent-layer, rgba(255, 255, 255, 0.2));
+    --ytf-border: var(--yt-spec-10-percent-layer, rgba(255, 255, 255, 0.2));
+    --ytf-accent: var(--yt-spec-call-to-action, #3ea6ff);
+    --ytf-accent-bg: rgba(62, 166, 255, 0.15);
+    --ytf-danger: #f28b82;
+  }
+}
+
+.ytf-btn {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ytf-text);
+  background: var(--ytf-hover);
+  border: none;
+  border-radius: 18px;
+  padding: 0 14px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ytf-btn:hover {
+  background: var(--ytf-active);
+}
+.ytf-btn:focus-visible,
+.ytf-icon-btn:focus-visible {
+  outline: 2px solid var(--ytf-accent);
+  outline-offset: 2px;
+}
+.ytf-btn.primary {
+  background: var(--ytf-text);
+  color: var(--ytf-bg);
+}
+.ytf-icon-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ytf-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.ytf-icon-btn:hover {
+  background: var(--ytf-hover);
+}
+.ytf-input {
+  font: inherit;
+  font-size: 14px;
+  color: var(--ytf-text);
+  background: transparent;
+  border: 1px solid var(--ytf-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 0;
+}
+.ytf-input:focus {
+  outline: none;
+  border-color: var(--ytf-accent);
+}

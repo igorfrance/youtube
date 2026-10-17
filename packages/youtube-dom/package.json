@@ -1,0 +1,10 @@
+{
+  "name": "@yt/youtube-dom",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc -p ." },
+  "dependencies": { "@yt/shared": "workspace:*" },
+  "devDependencies": { "@yt/tsconfig": "workspace:*" }
+}

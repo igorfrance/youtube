@@ -1,0 +1,21 @@
+{
+  "name": "@yt/ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens.css"
+  },
+  "scripts": {
+    "typecheck": "vue-tsc -p ."
+  },
+  "dependencies": {
+    "@yt/shared": "workspace:*",
+    "vue": "^3.5.44"
+  },
+  "devDependencies": {
+    "@yt/tsconfig": "workspace:*",
+    "vue-tsc": "^3.3.13"
+  }
+}
