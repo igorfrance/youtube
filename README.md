@@ -22,12 +22,16 @@ separate build step for them.
 bun install
 bun run dev        # folders extension with hot reload (opens Chrome)
 bun run build      # production build in apps/folders-extension/.output/chrome-mv3
-bun run zip:all    # store packages for Chrome, Edge and Firefox (+ Firefox sources zip)
+bun run zip:all    # store packages for Chrome, Edge and Firefox (+ Firefox sources zip), without the manifest key
 bun test           # unit tests across the repo
 bun run typecheck  # vue-tsc / tsc in every workspace
 ```
 
 ### Load the extension in Chrome
+
+To install on a computer without building, use the
+[latest release](https://github.com/igorfrance/youtube/releases/latest)
+([steps](apps/folders-extension/README.md#install-from-github)). To build it yourself:
 
 1. `bun run build`
 2. Open `chrome://extensions`, turn on **Developer mode**.

@@ -1,0 +1,49 @@
+name: Release
+
+# Publishes a ready-to-load Chrome build of Folders for YouTube as a GitHub
+# release, so another computer can install it without the Web Store:
+# https://github.com/igorfrance/youtube/releases/latest/download/folders-for-youtube-chrome.zip
+# One release per version in apps/folders-extension/package.json; later pushes
+# with the same version replace its zip.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/folders-extension/**'
+      - 'packages/**'
+      - 'bun.lock'
+      - '.github/workflows/release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - run: bun --filter folders-extension zip:unpacked
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(jq -r .version apps/folders-extension/package.json)
+          tag="folders-extension-v$version"
+          zip=apps/folders-extension/.output/folders-for-youtube-chrome.zip
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --target "$GITHUB_SHA" --latest \
+              --title "Folders for YouTube $version" \
+              --notes "Chrome and Edge build for loading unpacked. Install steps: https://github.com/${{ github.repository }}/tree/main/apps/folders-extension#install-from-github"
+          fi
+          gh release upload "$tag" "$zip" --clobber

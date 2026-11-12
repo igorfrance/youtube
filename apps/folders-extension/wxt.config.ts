@@ -1,8 +1,26 @@
 import { defineConfig } from 'wxt';
 
+/**
+ * Public key that pins the Chrome/Edge extension ID to
+ * hbboehbfagelbdaihkafoljokmpbbdce for unpacked installs. Without it Chrome
+ * derives the ID from the folder path, so each computer would get a different
+ * ID, and chrome.storage.sync (which is keyed by ID) would not carry folders
+ * between them. The matching private key is not needed and is not kept.
+ */
+const UNPACKED_KEY =
+  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApOwql9ofqQc6qattTbRtgCXNwKBVacOa0RDHMmvba70HgZdzOK88RHTtQ72wdu0lYJe2I68xe8XURLNzl4BLTzGtH5LyYK1i/N4MYCkStCchqJaYjn1ld150lajlQLW6/BR3dYk85ZiCCj6x0b2rYzx+ClcIm+wS/a8JE3rb0/f/6EDLqEv/WfQhVuJQIKOoNXZDrhqQIhXrFLfHhdIVWe6n6uNNbCQVqHcg8PhBRKF7pzZ6yttoxSheyn3Q73WnICDoMg0U0Q6qw1oGEMfeYMFVKme+kMwKzYozQ5ZB/XIRVy/DFF/HX0OJ5WJhOywno0dMw93KdnUGv/vatDiHzQIDAQAB';
+
+/**
+ * Store packages are built with STORE=1 (the zip scripts set it). The Chrome
+ * Web Store and Edge Add-ons reject a manifest `key`; they assign their own ID.
+ */
+const store = process.env.STORE === '1';
+
 export default defineConfig({
   modules: ['@wxt-dev/module-vue'],
   zip: {
+    // The GitHub release ships a ready-to-load Chrome build under a stable name.
+    ...(store ? {} : { artifactTemplate: 'folders-for-youtube-{{browser}}.zip' }),
     // Firefox reviewers rebuild from source, which includes the shared workspace packages.
     sourcesRoot: '../..',
     excludeSources: ['**/node_modules/**', '**/.output/**', '**/.wxt/**', '.github/**', '**/store/**'],
@@ -32,6 +50,6 @@ export default defineConfig({
             },
           },
         }
-      : { minimum_chrome_version: '116' }),
+      : { minimum_chrome_version: '116', ...(store ? {} : { key: UNPACKED_KEY }) }),
   }),
 });
