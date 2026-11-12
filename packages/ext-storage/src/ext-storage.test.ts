@@ -55,3 +55,14 @@ test('migrates data saved by an older version', async () => {
   const s = store(local, new MemoryArea(), 2, (d, v) => (v === 1 ? { items: d as string[] } : { items: [] }));
   expect(await s.load()).toEqual({ items: ['x'] });
 });
+
+test('pushes a local copy that sync never received', async () => {
+  const local = new MemoryArea();
+  const sync = new MemoryArea();
+  // Saved locally, but the page closed before the mirror ran.
+  await local.set({ org: { v: 1, updatedAt: 5, data: { items: ['only here'] } } });
+  const s = store(local, sync);
+  expect(await s.load()).toEqual({ items: ['only here'] });
+  await s.flush();
+  expect(await store(new MemoryArea(), sync).load()).toEqual({ items: ['only here'] });
+});

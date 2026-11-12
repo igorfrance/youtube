@@ -117,7 +117,16 @@ export class SyncedStore<T> {
       await this.o.local.set({ [this.o.key]: { v: this.o.version, updatedAt: synced.updatedAt, data } });
       return data;
     }
-    return local ? this.upgrade(local) : this.o.empty();
+    if (!local) return this.o.empty();
+    const data = this.upgrade(local);
+    if (this.o.sync && !this.pending && (!synced || local.updatedAt > synced.updatedAt)) {
+      // The synced copy is missing or behind: data saved before sync was on, or
+      // a save whose mirror never ran (the page closed within the delay). Push it.
+      this.pending = { v: this.o.version, updatedAt: local.updatedAt, data };
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => void this.flush(), this.o.syncDelayMs ?? 1000);
+    }
+    return data;
   }
 
   async save(data: T): Promise<void> {
