@@ -51,9 +51,9 @@ export default defineContentScript({
     /** Hides the native list only while our folders are actually showing. */
     function applyNativeVisibility() {
       const section = findSubscriptionsSection() as HTMLElement | null;
-      if (section) section.style.display = sidebarMounted && org.value.settings.replaceNativeSubscriptions ? 'none' : '';
+      if (section) section.style.display = sidebarMounted && !org.value.settings.showNativeSubscriptions ? 'none' : '';
     }
-    watch(() => org.value.settings.replaceNativeSubscriptions, applyNativeVisibility);
+    watch(() => org.value.settings.showNativeSubscriptions, applyNativeVisibility);
     // The guide re-renders on its own (e.g. when toggled); re-apply when it does.
     const guideObserver = new MutationObserver(() => applyNativeVisibility());
     const observeGuide = () => {

@@ -106,7 +106,7 @@ const ORG = {
       PLsynth: ['pmusic'],
       PLjazz: ['pmusic'],
     },
-    settings: { replaceNativeSubscriptions: true, feedShowShorts: true },
+    settings: { showNativeSubscriptions: false, feedShowShorts: true },
   },
 };
 
@@ -284,6 +284,8 @@ const sideBySide = (left, right) => `<html><body style="margin:0;width:1280px;he
   const raw = (n) => path.join(RAW, `${n}.png`);
   await yt.bringToFront();
   await yt.waitForFunction(() => document.querySelector('ytf-sidebar')?.shadowRoot?.textContent?.includes('Programming'), null, { timeout: 10000 });
+  // Both sections start collapsed; open them to show the folders.
+  for (const name of ['subscriptions', 'playlists']) await yt.locator('ytf-sidebar').getByRole('button', { name: `Expand ${name} folders` }).click();
   await yt.waitForTimeout(500);
   await yt.screenshot({ path: raw('sidebar') });
 

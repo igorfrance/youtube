@@ -14,6 +14,7 @@ import {
   itemIdsIn,
   moveFolder,
   moveItems,
+  normalizeOrg,
   parseExport,
   removeFromFolder,
   toExport,
@@ -134,5 +135,13 @@ describe('account changes', () => {
     const out = removeItems(lib, ['a', 'p']);
     expect(out.channels.map((c) => c.id)).toEqual(['b']);
     expect(out.playlists).toEqual([]);
+  });
+
+  test("YouTube's own subscription list is hidden by default, including for older saved settings", () => {
+    expect(emptyOrg().settings.showNativeSubscriptions).toBe(false);
+    const old = normalizeOrg({ folders: [], placements: {}, settings: { replaceNativeSubscriptions: false, feedShowShorts: false } });
+    expect(old.settings).toEqual({ showNativeSubscriptions: false, feedShowShorts: false });
+    expect(normalizeOrg({ folders: [], placements: {} }).settings).toEqual(emptyOrg().settings);
+    expect(normalizeOrg({ ...emptyOrg(), settings: { showNativeSubscriptions: true, feedShowShorts: true } }).settings.showNativeSubscriptions).toBe(true);
   });
 });
