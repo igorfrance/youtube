@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed, inject, ref } from 'vue';
 import FolderGlyph from './FolderGlyph.vue';
 import Icon from './Icon.vue';
-import { TREE_CONTEXT, type UiTreeNode } from './tree';
+import { FOLDER_CUSTOMIZE, TREE_CONTEXT, type UiTreeNode } from './tree';
 
 defineOptions({ name: 'FolderTreeNode' });
 const props = defineProps<{ node: UiTreeNode; depth: number }>();
 defineSlots<{ item(props: { node: UiTreeNode; depth: number }): unknown }>();
 
 const ctx = inject(TREE_CONTEXT)!;
+const customize = inject(FOLDER_CUSTOMIZE, null);
+const canCustomize = computed(() => !!customize && !props.node.fixed);
+const row = ref<HTMLElement>();
+
+function onMenu(e: MouseEvent) {
+  if (canCustomize.value && row.value) customize!(props.node.id, row.value);
+  else ctx.menu(props.node.id, e);
+}
 const open = computed(() => !props.node.collapsed);
 const selected = computed(() => ctx.selectedId.value === props.node.id);
 const dropping = computed(() => ctx.dropTargetId.value === props.node.id);
@@ -17,6 +25,7 @@ const dropping = computed(() => ctx.dropTargetId.value === props.node.id);
 <template>
   <li role="treeitem" :aria-expanded="open" :aria-selected="selected">
     <div
+      ref="row"
       class="row"
       :class="{ selected, dropping }"
       :style="{ paddingLeft: `${4 + depth * 16}px` }"
@@ -25,7 +34,7 @@ const dropping = computed(() => ctx.dropTargetId.value === props.node.id);
       @dragover="ctx.dragOver(node.id, $event)"
       @dragleave="ctx.dragLeave(node.id)"
       @drop="ctx.drop(node.id, $event)"
-      @contextmenu.prevent="ctx.menu(node.id, $event)"
+      @contextmenu.prevent="onMenu"
     >
       <button class="toggle" :aria-label="`${open ? 'Collapse' : 'Expand'} ${node.name}`" @click="ctx.toggle(node.id)">
         <Icon name="chevron" :size="14" :class="{ open }" />
@@ -34,6 +43,15 @@ const dropping = computed(() => ctx.dropTargetId.value === props.node.id);
         <FolderGlyph :color="node.color" :icon="node.icon" :size="20" />
         <span class="label">{{ node.name }}</span>
         <span v-if="node.count !== undefined" class="count">{{ node.count }}</span>
+      </button>
+      <button
+        v-if="canCustomize"
+        class="customize"
+        :aria-label="`Customize ${node.name}`"
+        title="Color and icon"
+        @click="customize!(node.id, row!)"
+      >
+        <Icon name="palette" :size="16" />
       </button>
     </div>
     <ul v-if="open" class="children" role="group">
@@ -112,6 +130,29 @@ li {
 .count {
   font-size: 12px;
   color: var(--ytf-text-2);
+}
+.customize {
+  width: 28px;
+  height: 28px;
+  margin-right: 4px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ytf-text-2);
+  padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.row:hover .customize,
+.row:focus-within .customize {
+  display: inline-flex;
+}
+.customize:hover {
+  background: var(--ytf-active);
+  color: var(--ytf-text);
 }
 button:focus-visible {
   outline: 2px solid var(--ytf-accent);

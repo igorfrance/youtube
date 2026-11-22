@@ -9,6 +9,10 @@ project's design doc; this is how the code is laid out.
   flat subscription list (a link at the bottom brings the native list back).
   Folders nest, and a channel or playlist can be in several folders. Items in no
   folder sit in **Unsorted**.
+- **Folder colors and icons.** Hover a folder in the sidebar and click the
+  palette button (or right-click the folder) to rename it and pick its color
+  (16 swatches or any custom color) and icon (28 built-in icons, or any emoji).
+  In the organizer, click the folder's icon above its contents.
 - **Folder feed.** Click a subscriptions folder to see the latest uploads from
   its channels (All / Videos / Shorts). Click a playlists folder to see its
   playlists.
