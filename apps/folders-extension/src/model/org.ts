@@ -24,8 +24,12 @@ export interface Folder {
 }
 
 export interface Settings {
-  /** Hide YouTube's flat Subscriptions list in the sidebar (folders replace it). */
-  replaceNativeSubscriptions: boolean;
+  /**
+   * Show YouTube's flat Subscriptions list under the folders. Off by default:
+   * the folders replace it. (Replaces the older `replaceNativeSubscriptions`
+   * key, which is dropped so everyone starts with the list hidden.)
+   */
+  showNativeSubscriptions: boolean;
   /** Include Shorts in folder feeds. */
   feedShowShorts: boolean;
 }
@@ -42,8 +46,20 @@ export const ORG_VERSION = 1;
 export const emptyOrg = (): OrgState => ({
   folders: [],
   placements: {},
-  settings: { replaceNativeSubscriptions: true, feedShowShorts: true },
+  settings: { showNativeSubscriptions: false, feedShowShorts: true },
 });
+
+/** Fills in missing settings and drops retired ones. */
+export function normalizeSettings(raw: unknown): Settings {
+  const { replaceNativeSubscriptions: _retired, ...rest } = (raw ?? {}) as Partial<Settings> & { replaceNativeSubscriptions?: unknown };
+  return { ...emptyOrg().settings, ...rest };
+}
+
+/** Fills in keys older saved data may miss, and drops retired settings. */
+export const normalizeOrg = (data: unknown): OrgState => {
+  const o = (data ?? {}) as Partial<OrgState>;
+  return { ...emptyOrg(), ...o, settings: normalizeSettings(o.settings) };
+};
 
 export const treeOf = (kind: ItemKind): TreeKind => (kind === 'channel' ? 'subscriptions' : 'playlists');
 
@@ -218,7 +234,7 @@ export function parseExport(json: string): OrgState {
   return {
     folders: folders.map((f) => ({ ...f, parentId: f.parentId && ids.has(f.parentId) ? f.parentId : null })),
     placements,
-    settings: { ...emptyOrg().settings, ...r.org.settings },
+    settings: normalizeSettings(r.org.settings),
   };
 }
 

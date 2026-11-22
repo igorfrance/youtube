@@ -6,7 +6,7 @@ import { refreshLibrary } from '../lib/library-sync';
 import { mutate, useLibrary, useOrg } from '../lib/store';
 import { isUnsorted, itemsInFolder, treeOfUnsorted, treeView } from '../lib/view';
 import { createFolder, getFolder, updateFolder, type TreeKind } from '../model/org';
-import { openFolderId, unsortedCollapsed } from './ui-state';
+import { openFolderId, sectionCollapsed, unsortedCollapsed } from './ui-state';
 
 const org = useOrg();
 const lib = useLibrary();
@@ -38,9 +38,15 @@ function toggle(id: string) {
   if (f) void mutate((s) => updateFolder(s, id, { collapsed: !f.collapsed }));
 }
 
+function toggleSection(tree: TreeKind) {
+  sectionCollapsed.value = { ...sectionCollapsed.value, [tree]: !sectionCollapsed.value[tree] };
+}
+
 const newFolderIn = ref<TreeKind | null>(null);
 const newName = ref('');
 function startNew(tree: TreeKind) {
+  // Open the section so the new folder's name field is visible.
+  sectionCollapsed.value = { ...sectionCollapsed.value, [tree]: false };
   newFolderIn.value = tree;
   newName.value = '';
 }
@@ -64,6 +70,15 @@ function organize() {
   <div class="sidebar">
     <section v-for="t in trees" :key="t.tree" class="section">
       <div class="head">
+        <button
+          class="section-toggle"
+          :aria-expanded="!sectionCollapsed[t.tree]"
+          :aria-controls="`ytf-section-${t.tree}`"
+          :aria-label="`${sectionCollapsed[t.tree] ? 'Expand' : 'Collapse'} ${t.title.toLowerCase()} folders`"
+          @click="toggleSection(t.tree)"
+        >
+          <Icon name="chevron" :size="14" :class="{ open: !sectionCollapsed[t.tree] }" />
+        </button>
         <a class="title" :href="t.allHref">{{ t.title }}</a>
         <button class="ytf-icon-btn" :aria-label="`New ${t.title.toLowerCase()} folder`" title="New folder" @click="startNew(t.tree)">
           <Icon name="plus" :size="18" />
@@ -73,20 +88,22 @@ function organize() {
         </button>
       </div>
 
-      <form v-if="newFolderIn === t.tree" class="new" @submit.prevent="commitNew">
-        <input v-model="newName" class="ytf-input" placeholder="Folder name" aria-label="Folder name" v-focus @blur="commitNew" @keydown.esc="newFolderIn = null" />
-      </form>
+      <div v-show="!sectionCollapsed[t.tree]" :id="`ytf-section-${t.tree}`">
+        <form v-if="newFolderIn === t.tree" class="new" @submit.prevent="commitNew">
+          <input v-model="newName" class="ytf-input" placeholder="Folder name" aria-label="Folder name" v-focus @blur="commitNew" @keydown.esc="newFolderIn = null" />
+        </form>
 
-      <FolderTree :nodes="t.nodes" :label="`${t.title} folders`" :selected-id="openFolderId ?? undefined" @select="(id) => (openFolderId = id)" @toggle="toggle">
-        <template #item="{ node, depth }">
-          <li v-for="it in itemsFor(node)" :key="it.id" class="item">
-            <a :href="it.url" :style="{ paddingLeft: `${28 + (depth - 1) * 16}px` }" :title="it.missing ? 'No longer in your library' : it.title">
-              <Thumb :src="it.thumbnail" :title="it.title" :round="it.kind === 'channel'" :size="24" />
-              <span class="label" :class="{ missing: it.missing }">{{ it.title }}</span>
-            </a>
-          </li>
-        </template>
-      </FolderTree>
+        <FolderTree :nodes="t.nodes" :label="`${t.title} folders`" :selected-id="openFolderId ?? undefined" @select="(id) => (openFolderId = id)" @toggle="toggle">
+          <template #item="{ node, depth }">
+            <li v-for="it in itemsFor(node)" :key="it.id" class="item">
+              <a :href="it.url" :style="{ paddingLeft: `${28 + (depth - 1) * 16}px` }" :title="it.missing ? 'No longer in your library' : it.title">
+                <Thumb :src="it.thumbnail" :title="it.title" :round="it.kind === 'channel'" :size="24" />
+                <span class="label" :class="{ missing: it.missing }">{{ it.title }}</span>
+              </a>
+            </li>
+          </template>
+        </FolderTree>
+      </div>
     </section>
 
     <p v-if="empty" class="note">
@@ -98,8 +115,8 @@ function organize() {
       Create folders here with +, or open the organizer to sort everything at once.
     </p>
 
-    <button class="native-toggle" @click="mutate((s) => ({ ...s, settings: { ...s.settings, replaceNativeSubscriptions: !s.settings.replaceNativeSubscriptions } }))">
-      {{ org.settings.replaceNativeSubscriptions ? "Show YouTube's subscription list" : "Hide YouTube's subscription list" }}
+    <button class="native-toggle" @click="mutate((s) => ({ ...s, settings: { ...s.settings, showNativeSubscriptions: !s.settings.showNativeSubscriptions } }))">
+      {{ org.settings.showNativeSubscriptions ? "Hide YouTube's subscription list" : "Show YouTube's subscription list" }}
     </button>
   </div>
 </template>
@@ -119,7 +136,27 @@ function organize() {
 .head {
   display: flex;
   align-items: center;
-  padding: 6px 0 6px 12px;
+  padding: 6px 0 6px 0;
+}
+.section-toggle {
+  width: 24px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--ytf-text-2);
+  padding: 0;
+  margin-right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.section-toggle svg {
+  transition: transform 0.15s;
+}
+.section-toggle svg.open {
+  transform: rotate(90deg);
 }
 .title {
   flex: 1;

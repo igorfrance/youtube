@@ -188,8 +188,8 @@ const counts = computed(() => `${lib.value.channels.length} channels · ${lib.va
       <label>
         <input
           type="checkbox"
-          :checked="org.settings.replaceNativeSubscriptions"
-          @change="mutate((s) => ({ ...s, settings: { ...s.settings, replaceNativeSubscriptions: !s.settings.replaceNativeSubscriptions } }))"
+          :checked="!org.settings.showNativeSubscriptions"
+          @change="mutate((s) => ({ ...s, settings: { ...s.settings, showNativeSubscriptions: !s.settings.showNativeSubscriptions } }))"
         />
         Hide YouTube's own subscription list in the sidebar
       </label>

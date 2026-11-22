@@ -7,5 +7,7 @@ export const openFolderId = ref<string | null>(null);
 export const paletteOpen = ref(false);
 /** Updated on every YouTube navigation, so components can react to the current page. */
 export const currentUrl = ref(location.href);
+/** Collapse state of the Subscriptions and Playlists sections in YouTube's sidebar. Starts collapsed on every page load (not synced). */
+export const sectionCollapsed = ref({ subscriptions: true, playlists: true });
 /** Collapse state of the Unsorted pseudo-folders (not synced). */
 export const unsortedCollapsed = ref({ subscriptions: true, playlists: true });

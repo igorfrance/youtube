@@ -2,7 +2,7 @@ import { LocalValue, SyncedStore, type Area, type ChangeSource } from '@yt/ext-s
 import { shallowRef, type ShallowRef } from 'vue';
 import { browser } from 'wxt/browser';
 import { emptyLibrary, type Library } from '../model/library';
-import { emptyOrg, ORG_VERSION, type OrgState } from '../model/org';
+import { emptyOrg, normalizeOrg, ORG_VERSION, type OrgState } from '../model/org';
 
 const local = browser.storage.local as unknown as Area;
 const sync = browser.storage.sync as unknown as Area;
@@ -14,7 +14,7 @@ export const orgStore = new SyncedStore<OrgState>({
   version: ORG_VERSION,
   empty: emptyOrg,
   // Older settings objects may miss newer keys; fill them in.
-  migrate: (data) => ({ ...emptyOrg(), ...(data as OrgState) }),
+  migrate: (data) => normalizeOrg(data),
   local,
   sync,
   changes,
@@ -31,8 +31,8 @@ export function useOrg(): ShallowRef<OrgState> {
   if (!orgRef) {
     const r = shallowRef(emptyOrg());
     orgRef = r;
-    void orgStore.load().then((v) => (r.value = { ...emptyOrg(), ...v }));
-    orgStore.subscribe((v) => (r.value = { ...emptyOrg(), ...v }));
+    void orgStore.load().then((v) => (r.value = normalizeOrg(v)));
+    orgStore.subscribe((v) => (r.value = normalizeOrg(v)));
   }
   return orgRef;
 }
@@ -51,7 +51,7 @@ export function useLibrary(): ShallowRef<Library> {
 
 /** Applies a pure change to the organization and saves it. */
 export async function mutate(fn: (s: OrgState) => OrgState): Promise<void> {
-  const next = fn(await orgStore.load());
+  const next = fn(normalizeOrg(await orgStore.load()));
   if (orgRef) orgRef.value = next;
   await orgStore.save(next);
 }
