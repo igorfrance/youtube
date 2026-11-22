@@ -27,6 +27,8 @@ export interface BridgeMethods {
   /** Deletes own playlists, un-saves other people's. */
   removePlaylists: (playlistIds: string[]) => BatchResult;
   mergePlaylists: (args: { sources: string[]; target: MergeTarget }) => MergeResult;
+  /** Opens a channel or playlist in this tab the way YouTube's own links do, without a reload. */
+  navigate: (item: Pick<LibraryItem, 'kind' | 'id' | 'url'>) => void;
 }
 
 export type BridgeMethod = keyof BridgeMethods;

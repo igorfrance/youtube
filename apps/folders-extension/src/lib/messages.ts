@@ -1,4 +1,4 @@
-import type { ChannelId, FeedVideo } from '@yt/shared';
+import type { ChannelId, FeedVideo, LibraryItem } from '@yt/shared';
 import type { MergeProgress, MergeResult, MergeTarget } from '@yt/youtube-client';
 import type { BatchResult } from './bridge';
 import { browser } from 'wxt/browser';
@@ -17,7 +17,11 @@ export type AccountAction =
   | { kind: 'mergePlaylists'; sources: string[]; target: MergeTarget };
 
 /** Messages handled by the content script in a YouTube tab. */
-export type TabMessage = { type: 'library:refresh' } | { type: 'switcher:open' } | { type: 'account:action'; action: AccountAction };
+export type TabMessage =
+  | { type: 'library:refresh' }
+  | { type: 'switcher:open' }
+  | { type: 'account:action'; action: AccountAction }
+  | { type: 'item:open'; item: Pick<LibraryItem, 'kind' | 'id' | 'url'> };
 
 /** Broadcast by the content script while a merge runs. */
 export type ActionProgressMessage = { type: 'action:progress'; progress: MergeProgress };

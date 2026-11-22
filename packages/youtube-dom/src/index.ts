@@ -1,3 +1,5 @@
+import type { LibraryItem } from '@yt/shared';
+
 /**
  * Everything that depends on YouTube's page structure lives here, so a
  * YouTube redesign means fixing one file. Every lookup returns null instead
@@ -110,4 +112,23 @@ export function pageContentRect(): { top: number; left: number } {
   const left = Math.max(visibleRight('tp-yt-app-drawer#guide[opened] #contentContainer'), visibleRight('ytd-mini-guide-renderer'));
   // On narrow windows the full guide floats over the page; then use the whole width.
   return { top: Math.max(0, top), left: left > window.innerWidth / 2 ? 0 : left };
+}
+
+/**
+ * The endpoint YouTube's own links carry for a channel or playlist page. Fired
+ * as a `yt-navigate` event on `ytd-app` (from the page's main world), it opens
+ * the page in place, without reloading YouTube.
+ */
+export function navigationEndpoint(item: Pick<LibraryItem, 'kind' | 'id' | 'url'>): Record<string, unknown> {
+  const playlist = item.kind === 'playlist';
+  return {
+    commandMetadata: {
+      webCommandMetadata: {
+        url: item.url,
+        webPageType: playlist ? 'WEB_PAGE_TYPE_PLAYLIST' : 'WEB_PAGE_TYPE_CHANNEL',
+        rootVe: playlist ? 5754 : 3611,
+      },
+    },
+    browseEndpoint: playlist ? { browseId: `VL${item.id}` } : { browseId: item.id, canonicalBaseUrl: item.url },
+  };
 }

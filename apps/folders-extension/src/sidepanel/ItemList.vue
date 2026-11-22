@@ -2,6 +2,7 @@
 import type { LibraryItem } from '@yt/shared';
 import { Icon, Thumb, writeDrag } from '@yt/ui';
 import { ref, watch } from 'vue';
+import { clickTarget, openItem } from '../lib/open-item';
 import { useOrg } from '../lib/store';
 import { foldersOf } from '../model/org';
 
@@ -34,6 +35,8 @@ function dragStart(it: LibraryItem, e: DragEvent) {
   if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copyMove';
 }
 
+const visit = (it: LibraryItem, e: MouseEvent) => void openItem({ kind: it.kind, id: it.id, url: it.url }, clickTarget(e));
+
 const otherFolders = (it: LibraryItem) =>
   foldersOf(org.value, it.id)
     .filter((f) => f.id !== props.folderId)
@@ -64,7 +67,14 @@ const otherFolders = (it: LibraryItem) =>
           <template v-else>{{ it.handle ?? '' }}</template>
         </span>
       </span>
-      <a class="open" :href="`https://www.youtube.com${it.url}`" target="_blank" rel="noreferrer" :aria-label="`Open ${it.title} on YouTube`" title="Open on YouTube" @click.stop>
+      <a
+        class="open"
+        :href="`https://www.youtube.com${it.url}`"
+        :aria-label="`Open ${it.title} on YouTube`"
+        title="Open on YouTube (Ctrl+click: new tab)"
+        @click.stop.prevent="visit(it, $event)"
+        @auxclick.stop.prevent="$event.button === 1 && visit(it, $event)"
+      >
         <Icon name="chevron" :size="16" />
       </a>
     </li>
