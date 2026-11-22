@@ -1,7 +1,9 @@
 <script setup lang="ts">
-/** Stroke icons drawn in the current text color. */
+import { FOLDER_ICON_PATHS } from './folder-style';
+
+/** Stroke icons drawn in the current text color. Folder icons come from folder-style.ts. */
 const PATHS = {
-  folder: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+  ...FOLDER_ICON_PATHS,
   chevron: 'M9 6l6 6-6 6',
   plus: 'M12 5v14M5 12h14',
   search: 'M11 4a7 7 0 1 1 0 14 7 7 0 0 1 0-14zM20 20l-4-4',

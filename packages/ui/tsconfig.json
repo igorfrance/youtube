@@ -1,5 +1,5 @@
 {
   "extends": "@yt/tsconfig/base.json",
-  "compilerOptions": { "jsx": "preserve" },
+  "compilerOptions": { "jsx": "preserve", "types": ["bun"] },
   "include": ["src/**/*.ts", "src/**/*.vue"]
 }

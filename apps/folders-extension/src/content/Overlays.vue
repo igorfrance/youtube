@@ -4,6 +4,8 @@ import { computed } from 'vue';
 import { useLibrary, useOrg } from '../lib/store';
 import { folderLabel, isUnsorted } from '../lib/view';
 import { foldersOf, getFolder } from '../model/org';
+import { customizing } from './customize-state';
+import FolderCustomizer from './FolderCustomizer.vue';
 import FolderOverlay from './FolderOverlay.vue';
 import { openFolderId, paletteOpen } from './ui-state';
 
@@ -53,6 +55,13 @@ const overlayFolder = computed(() => {
 
 <template>
   <FolderOverlay v-if="overlayFolder" :folder-id="overlayFolder" @close="openFolderId = null" />
+  <FolderCustomizer
+    v-if="customizing"
+    :key="customizing.id"
+    :folder-id="customizing.id"
+    :anchor="customizing.anchor"
+    @close="customizing = null"
+  />
   <CommandPalette
     v-if="paletteOpen"
     :entries="entries"

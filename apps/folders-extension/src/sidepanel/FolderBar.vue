@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { FolderGlyph, Icon } from '@yt/ui';
+import { FolderGlyph, FolderStylePicker, Icon } from '@yt/ui';
 import { computed, ref, watch } from 'vue';
 import { mutate, useOrg } from '../lib/store';
 import { folderLabel, isUnsorted } from '../lib/view';
-import { createFolder, deleteFolder, FOLDER_COLORS, getFolder, updateFolder } from '../model/org';
+import { createFolder, deleteFolder, getFolder, updateFolder } from '../model/org';
 
-/** Header for the selected folder: rename, color, icon, sub-folder, delete. */
+/** Header for the selected folder: rename, color and icon, sub-folder, delete. */
 const props = defineProps<{ folderId: string; count: number }>();
 const emit = defineEmits<{ select: [id: string] }>();
 
@@ -50,7 +50,10 @@ async function remove() {
 <template>
   <div class="bar">
     <div class="title">
-      <FolderGlyph :color="folder?.color" :icon="folder?.icon" :size="22" />
+      <button v-if="folder" class="glyph-btn" :aria-expanded="editing" aria-label="Color and icon" title="Color and icon" @click="editing = !editing">
+        <FolderGlyph :color="folder.color" :icon="folder.icon" :size="22" />
+      </button>
+      <FolderGlyph v-else :size="22" />
       <input
         v-if="folder"
         v-model="name"
@@ -69,28 +72,7 @@ async function remove() {
     <p v-if="folder && folder.parentId" class="path">{{ folderLabel(org, folder.id) }}</p>
 
     <div v-if="folder && editing" class="edit">
-      <div class="swatches" role="radiogroup" aria-label="Color">
-        <button
-          v-for="c in FOLDER_COLORS"
-          :key="c"
-          class="swatch"
-          role="radio"
-          :aria-checked="folder.color === c"
-          :aria-label="`Color ${c}`"
-          :style="{ background: c }"
-          @click="mutate((s) => updateFolder(s, folderId, { color: c }))"
-        />
-      </div>
-      <label class="icon-field">
-        Icon
-        <input
-          class="ytf-input"
-          maxlength="4"
-          placeholder="Emoji"
-          :value="folder.icon ?? ''"
-          @change="mutate((s) => updateFolder(s, folderId, { icon: ($event.target as HTMLInputElement).value.trim() || undefined }))"
-        />
-      </label>
+      <FolderStylePicker :color="folder.color" :icon="folder.icon" @change="(patch) => mutate((s) => updateFolder(s, folderId, patch))" />
       <div class="actions">
         <button class="ytf-btn" @click="addSub"><Icon name="plus" :size="16" /> Sub-folder</button>
         <button v-if="!confirming" class="ytf-btn danger" @click="confirming = true"><Icon name="trash" :size="16" /> Delete</button>
@@ -148,30 +130,20 @@ async function remove() {
   border-radius: var(--ytf-radius);
   background: var(--ytf-hover);
 }
-.swatches {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.swatch {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid transparent;
+.glyph-btn {
+  display: inline-flex;
+  padding: 4px;
+  margin: -4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
   cursor: pointer;
 }
-.swatch[aria-checked='true'] {
-  border-color: var(--ytf-text);
+.glyph-btn:hover {
+  background: var(--ytf-active);
 }
-.icon-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--ytf-text-2);
-}
-.icon-field input {
-  width: 80px;
+.glyph-btn:focus-visible {
+  outline: 2px solid var(--ytf-accent);
 }
 .actions {
   display: flex;

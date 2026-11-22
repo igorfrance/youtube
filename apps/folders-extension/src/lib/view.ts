@@ -27,7 +27,7 @@ export function treeView(org: OrgState, lib: Library, tree: TreeKind, unsortedCo
   const unsorted = unsortedItems(org, itemsOf(lib, kindOfTree(tree)));
   const nodes = toUiNodes(buildTree(org, tree));
   if (unsorted.length || nodes.length)
-    nodes.push({ id: UNSORTED[tree], name: 'Unsorted', color: undefined, count: unsorted.length, collapsed: unsortedCollapsed, children: [] });
+    nodes.push({ id: UNSORTED[tree], name: 'Unsorted', color: undefined, fixed: true, count: unsorted.length, collapsed: unsortedCollapsed, children: [] });
   return nodes;
 }
 

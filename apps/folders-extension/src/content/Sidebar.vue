@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { FolderTree, Icon, Thumb, type UiTreeNode } from '@yt/ui';
-import { computed, ref } from 'vue';
+import { FOLDER_CUSTOMIZE, FolderTree, Icon, Thumb, type UiTreeNode } from '@yt/ui';
+import { computed, provide, ref } from 'vue';
 import { toBackground } from '../lib/messages';
 import { refreshLibrary } from '../lib/library-sync';
 import { mutate, useLibrary, useOrg } from '../lib/store';
+import { customizing } from './customize-state';
 import { isUnsorted, itemsInFolder, treeOfUnsorted, treeView } from '../lib/view';
 import { createFolder, getFolder, updateFolder, type TreeKind } from '../model/org';
 import { openFolderId, unsortedCollapsed } from './ui-state';
@@ -58,6 +59,11 @@ const itemsFor = (node: UiTreeNode) => itemsInFolder(org.value, lib.value, node.
 function organize() {
   void toBackground({ type: 'sidepanel:open' });
 }
+
+// Folder rows get a color-and-icon button (and right-click); the popover itself is in Overlays.
+provide(FOLDER_CUSTOMIZE, (id, row) => {
+  customizing.value = customizing.value?.id === id ? null : { id, anchor: row.getBoundingClientRect() };
+});
 </script>
 
 <template>

@@ -8,6 +8,8 @@ export interface UiTreeNode {
   /** Number shown on the right (items in this folder and below). */
   count?: number;
   collapsed?: boolean;
+  /** A pseudo-folder (like Unsorted) that can't be renamed or restyled. */
+  fixed?: boolean;
   children: UiTreeNode[];
 }
 
@@ -26,6 +28,12 @@ export interface TreeContext {
 }
 
 export const TREE_CONTEXT: InjectionKey<TreeContext> = Symbol('tree');
+
+/**
+ * Provide this to give folder rows a "Customize" button (also on right-click)
+ * that calls it with the folder id and the row, to anchor a popover.
+ */
+export const FOLDER_CUSTOMIZE: InjectionKey<(id: string, anchor: HTMLElement) => void> = Symbol('folder-customize');
 
 /** Mime type for drag-and-drop payloads between folder trees and item lists. */
 export const DRAG_MIME = 'application/x-ytfolders';
