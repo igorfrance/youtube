@@ -1,4 +1,5 @@
 import { isChannelId, type LibraryItem } from '@yt/shared';
+import { navigationEndpoint } from '@yt/youtube-dom';
 import { fetchFromPageHtml, InnertubeClient, mergePlaylists, text, type InnertubeConfig, type MergeProgress } from '@yt/youtube-client';
 import { defineContentScript } from 'wxt/utils/define-content-script';
 import {
@@ -127,6 +128,25 @@ export default defineContentScript({
 
       async mergePlaylists([{ sources, target }], progress) {
         return mergePlaylists(client(), sources, target, progress);
+      },
+
+      async navigate([item]) {
+        // YouTube's router picks up `yt-navigate` from ytd-app, as when one of
+        // its own links is clicked. If it doesn't start within a moment (a
+        // YouTube change), fall back to a plain page load.
+        const app = document.querySelector('ytd-app');
+        const started = new Promise<boolean>((resolve) => {
+          const done = () => resolve(true);
+          document.addEventListener('yt-navigate-start', done, { once: true });
+          setTimeout(() => {
+            document.removeEventListener('yt-navigate-start', done);
+            resolve(false);
+          }, 1500);
+        });
+        app?.dispatchEvent(
+          new CustomEvent('yt-navigate', { bubbles: true, composed: true, detail: { endpoint: navigationEndpoint(item) } }),
+        );
+        if (!app || !(await started)) location.assign(item.url);
       },
     };
 

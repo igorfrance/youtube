@@ -11,6 +11,7 @@ import Sidebar from '../../src/content/Sidebar.vue';
 import { currentUrl, paletteOpen } from '../../src/content/ui-state';
 import { refreshLibrary, refreshLibraryIfStale } from '../../src/lib/library-sync';
 import { runAccountAction } from '../../src/lib/account-actions';
+import { callBridge } from '../../src/lib/bridge';
 import type { ActionResult, TabMessage } from '../../src/lib/messages';
 import { useOrg } from '../../src/lib/store';
 
@@ -33,6 +34,11 @@ export default defineContentScript({
         return true;
       }
       if (msg.type === 'switcher:open') paletteOpen.value = !paletteOpen.value;
+      if (msg.type === 'item:open') {
+        // Answer at once; a full page load would otherwise cut the reply off.
+        sendResponse(true);
+        callBridge('navigate', [msg.item], { timeoutMs: 5000 }).catch(() => location.assign(msg.item.url));
+      }
       return false;
     });
 
